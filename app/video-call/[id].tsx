@@ -12,7 +12,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { colors, commonStyles, buttonStyles } from '@/styles/commonStyles';
-import { Camera, CameraType } from 'expo-camera';
+import { Camera } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 
 const { width, height } = Dimensions.get('window');
@@ -23,7 +23,7 @@ export default function VideoCallScreen() {
   const [isConnected, setIsConnected] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
-  const [cameraType, setCameraType] = useState(CameraType.front);
+  const [cameraType, setCameraType] = useState<'front' | 'back'>('front');
   const [callDuration, setCallDuration] = useState(0);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
 
@@ -78,7 +78,7 @@ export default function VideoCallScreen() {
 
   const switchCamera = () => {
     setCameraType(
-      cameraType === CameraType.back ? CameraType.front : CameraType.back
+      cameraType === 'back' ? 'front' : 'back'
     );
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
@@ -138,7 +138,7 @@ export default function VideoCallScreen() {
         {isVideoEnabled ? (
           <Camera
             style={styles.camera}
-            type={cameraType}
+            facing={cameraType}
             ratio="16:9"
           />
         ) : (
