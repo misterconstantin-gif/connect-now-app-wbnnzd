@@ -36,7 +36,12 @@ export default function VideoCallScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }, 2000);
 
-    // Start call duration timer when connected
+    return () => {
+      clearTimeout(connectTimer);
+    };
+  }, []);
+
+  useEffect(() => {
     let durationTimer: NodeJS.Timeout;
     if (isConnected) {
       durationTimer = setInterval(() => {
@@ -45,14 +50,21 @@ export default function VideoCallScreen() {
     }
 
     return () => {
-      clearTimeout(connectTimer);
       if (durationTimer) clearInterval(durationTimer);
     };
   }, [isConnected]);
 
   const loadContactName = () => {
-    // In a real app, this would load from AsyncStorage
-    setContactName('Анна Иванова');
+    // Map contact names based on ID
+    const contactNames: { [key: string]: string } = {
+      '1': 'Ada Miles',
+      '2': 'William Hayes', 
+      '3': 'Grace Brooks',
+      '4': 'Anna Giovanni',
+      '5': 'Emma Barnes',
+      '6': 'Benjamin Cruz',
+    };
+    setContactName(contactNames[id as string] || 'Ella Davis');
   };
 
   const toggleMute = () => {
@@ -66,26 +78,13 @@ export default function VideoCallScreen() {
   };
 
   const switchCamera = () => {
-    setCameraType(
-      cameraType === 'back' ? 'front' : 'back'
-    );
+    setCameraType(cameraType === 'back' ? 'front' : 'back');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   const endCall = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    Alert.alert(
-      'Завершить звонок',
-      'Вы уверены, что хотите завершить звонок?',
-      [
-        { text: 'Отмена', style: 'cancel' },
-        { 
-          text: 'Завершить', 
-          style: 'destructive',
-          onPress: () => router.back()
-        },
-      ]
-    );
+    router.back();
   };
 
   const formatDuration = (seconds: number) => {
@@ -96,9 +95,9 @@ export default function VideoCallScreen() {
 
   if (!permission) {
     return (
-      <SafeAreaView style={commonStyles.container}>
+      <SafeAreaView style={styles.container}>
         <View style={styles.centerContent}>
-          <Text style={styles.statusText}>Запрос разрешений...</Text>
+          <Text style={styles.statusText}>Requesting permissions...</Text>
         </View>
       </SafeAreaView>
     );
@@ -106,17 +105,17 @@ export default function VideoCallScreen() {
 
   if (!permission.granted) {
     return (
-      <SafeAreaView style={commonStyles.container}>
+      <SafeAreaView style={styles.container}>
         <View style={styles.centerContent}>
-          <Text style={styles.statusText}>Нет доступа к камере</Text>
+          <Text style={styles.statusText}>No access to camera</Text>
           <Text style={styles.subtitleText}>
-            Для видеозвонков необходимо разрешение на использование камеры
+            Camera permission is required for video calls
           </Text>
           <Pressable style={styles.button} onPress={requestPermission}>
-            <Text style={styles.buttonText}>Разрешить доступ</Text>
+            <Text style={styles.buttonText}>Grant Permission</Text>
           </Pressable>
           <Pressable style={[styles.button, { backgroundColor: colors.backgroundAlt, marginTop: 16 }]} onPress={() => router.back()}>
-            <Text style={[styles.buttonText, { color: colors.text }]}>Назад</Text>
+            <Text style={[styles.buttonText, { color: colors.text }]}>Back</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -124,118 +123,92 @@ export default function VideoCallScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Video Area */}
-      <View style={styles.videoContainer}>
-        {isVideoEnabled ? (
-          <CameraView
-            style={styles.camera}
-            facing={cameraType}
-          />
-        ) : (
-          <View style={styles.videoDisabled}>
-            <View style={styles.avatarLarge}>
-              <Text style={styles.avatarLargeText}>👩‍💼</Text>
-            </View>
+    <View style={styles.container}>
+      {/* Main Video Area - Full Screen */}
+      <View style={styles.mainVideoContainer}>
+        {/* Remote user's video (simulated with avatar) */}
+        <View style={styles.remoteVideoFull}>
+          <View style={styles.remoteUserAvatar}>
+            <Text style={styles.remoteUserAvatarText}>👩‍💼</Text>
           </View>
-        )}
+        </View>
 
-        {/* Remote video placeholder */}
-        <View style={styles.remoteVideo}>
-          {isConnected ? (
-            <View style={styles.remoteVideoContent}>
-              <View style={styles.avatarMedium}>
-                <Text style={styles.avatarMediumText}>👩‍💼</Text>
-              </View>
-              <Text style={styles.remoteVideoText}>
-                Видео недоступно
-              </Text>
-            </View>
+        {/* Header with contact name and back button */}
+        <View style={styles.headerOverlay}>
+          <Pressable
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <IconSymbol name="chevron.left" size={24} color="#FFFFFF" />
+          </Pressable>
+          <View style={styles.headerInfo}>
+            <Text style={styles.contactNameHeader}>{contactName}</Text>
+            <Text style={styles.callStatusHeader}>
+              {isConnected ? formatDuration(callDuration) : 'Connecting...'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Picture-in-Picture - User's own video */}
+        <View style={styles.pipContainer}>
+          {isVideoEnabled ? (
+            <CameraView
+              style={styles.pipVideo}
+              facing={cameraType}
+            />
           ) : (
-            <View style={styles.connectingContainer}>
-              <Text style={styles.connectingText}>Соединение...</Text>
+            <View style={styles.pipVideoDisabled}>
+              <IconSymbol name="video.slash" size={24} color="#FFFFFF" />
             </View>
           )}
         </View>
-
-        {/* Call Info Overlay */}
-        <View style={styles.callInfoOverlay}>
-          <Text style={styles.contactNameLarge}>{contactName}</Text>
-          <Text style={styles.callStatus}>
-            {isConnected ? formatDuration(callDuration) : 'Вызов...'}
-          </Text>
-        </View>
       </View>
 
-      {/* Controls */}
+      {/* Bottom Controls */}
       <View style={styles.controlsContainer}>
         <View style={styles.controlsRow}>
-          {/* Mute Button */}
+          {/* Mute/Unmute */}
           <Pressable
-            style={[
-              buttonStyles.muteButton,
-              isMuted && styles.mutedButton
-            ]}
+            style={[styles.controlButton, isMuted && styles.controlButtonActive]}
             onPress={toggleMute}
           >
             <IconSymbol
               name={isMuted ? "mic.slash" : "mic"}
               size={24}
-              color={isMuted ? colors.accent : colors.text}
+              color={isMuted ? "#FFFFFF" : "#8E8E93"}
             />
           </Pressable>
 
-          {/* End Call Button */}
+          {/* Switch Camera */}
           <Pressable
-            style={buttonStyles.endCallButton}
-            onPress={endCall}
+            style={styles.controlButton}
+            onPress={switchCamera}
           >
-            <IconSymbol name="phone.down" size={28} color="#FFFFFF" />
+            <IconSymbol name="arrow.triangle.2.circlepath.camera" size={24} color="#8E8E93" />
           </Pressable>
 
-          {/* Video Toggle Button */}
+          {/* Video On/Off */}
           <Pressable
-            style={[
-              buttonStyles.muteButton,
-              !isVideoEnabled && styles.mutedButton
-            ]}
+            style={[styles.controlButton, !isVideoEnabled && styles.controlButtonActive]}
             onPress={toggleVideo}
           >
             <IconSymbol
               name={isVideoEnabled ? "video" : "video.slash"}
               size={24}
-              color={!isVideoEnabled ? colors.accent : colors.text}
+              color={!isVideoEnabled ? "#FFFFFF" : "#8E8E93"}
             />
           </Pressable>
-        </View>
 
-        <View style={styles.controlsRow}>
-          {/* Switch Camera Button */}
+          {/* End Call */}
           <Pressable
-            style={buttonStyles.muteButton}
-            onPress={switchCamera}
+            style={styles.endCallButton}
+            onPress={endCall}
           >
-            <IconSymbol name="arrow.triangle.2.circlepath.camera" size={24} color={colors.text} />
-          </Pressable>
-
-          {/* Speaker Button */}
-          <Pressable
-            style={buttonStyles.muteButton}
-            onPress={() => console.log('Toggle speaker')}
-          >
-            <IconSymbol name="speaker.wave.2" size={24} color={colors.text} />
-          </Pressable>
-
-          {/* Chat Button */}
-          <Pressable
-            style={buttonStyles.muteButton}
-            onPress={() => router.push(`/chat/${id}`)}
-          >
-            <IconSymbol name="message" size={24} color={colors.text} />
+            <IconSymbol name="phone.down" size={28} color="#FFFFFF" />
           </Pressable>
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -244,99 +217,107 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  videoContainer: {
+  mainVideoContainer: {
     flex: 1,
     position: 'relative',
   },
-  camera: {
+  remoteVideoFull: {
+    flex: 1,
+    backgroundColor: '#2a2a2a',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  remoteUserAvatar: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  remoteUserAvatarText: {
+    fontSize: 60,
+  },
+  headerOverlay: {
+    position: 'absolute',
+    top: 60,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    zIndex: 10,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  headerInfo: {
     flex: 1,
   },
-  videoDisabled: {
+  contactNameHeader: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  callStatusHeader: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  pipContainer: {
+    position: 'absolute',
+    bottom: 120,
+    right: 20,
+    width: 100,
+    height: 140,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  pipVideo: {
+    flex: 1,
+  },
+  pipVideoDisabled: {
     flex: 1,
     backgroundColor: '#1a1a1a',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  remoteVideo: {
-    position: 'absolute',
-    top: 60,
-    right: 20,
-    width: 120,
-    height: 160,
-    backgroundColor: '#2a2a2a',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: colors.border,
-  },
-  remoteVideoContent: {
-    alignItems: 'center',
-  },
-  remoteVideoText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  connectingContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  connectingText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-  },
-  callInfoOverlay: {
-    position: 'absolute',
-    top: 60,
-    left: 20,
-    right: 160,
-  },
-  contactNameLarge: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  callStatus: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
-  },
   controlsContainer: {
     paddingHorizontal: 40,
     paddingVertical: 40,
-    gap: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
   },
   controlsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
   },
-  mutedButton: {
+  controlButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  controlButtonActive: {
     backgroundColor: colors.accent,
   },
-  avatarLarge: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.backgroundAlt,
+  endCallButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  avatarLargeText: {
-    fontSize: 60,
-  },
-  avatarMedium: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.backgroundAlt,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarMediumText: {
-    fontSize: 20,
   },
   centerContent: {
     flex: 1,
@@ -347,13 +328,13 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.text,
+    color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: 16,
   },
   subtitleText: {
     fontSize: 14,
-    color: colors.textSecondary,
+    color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
     marginBottom: 32,
   },

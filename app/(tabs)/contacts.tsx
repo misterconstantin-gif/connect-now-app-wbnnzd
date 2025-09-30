@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
+import { ContactAvatar } from '@/components/ContactAvatar';
 import { colors, commonStyles } from '@/styles/commonStyles';
 import * as Contacts from 'expo-contacts';
 
@@ -27,7 +28,6 @@ interface Contact {
 export default function ContactsScreen() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     requestContactsPermission();
@@ -35,18 +35,24 @@ export default function ContactsScreen() {
 
   const requestContactsPermission = async () => {
     try {
+      if (Platform.OS === 'web') {
+        loadDemoContacts();
+        return;
+      }
+
       const { status } = await Contacts.requestPermissionsAsync();
       if (status === 'granted') {
         loadContacts();
       } else {
         Alert.alert(
-          'Доступ к контактам',
-          'Для работы приложения необходим доступ к контактам',
+          'Permission Required',
+          'Access to contacts is needed to show your contacts list.',
           [
-            { text: 'Отмена', style: 'cancel' },
-            { text: 'Настройки', onPress: () => console.log('Open settings') },
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Settings', onPress: () => console.log('Open settings') },
           ]
         );
+        loadDemoContacts();
       }
     } catch (error) {
       console.log('Error requesting contacts permission:', error);
@@ -56,28 +62,29 @@ export default function ContactsScreen() {
 
   const loadContacts = async () => {
     try {
-      setLoading(true);
       const { data } = await Contacts.getContactsAsync({
         fields: [Contacts.Fields.Name, Contacts.Fields.PhoneNumbers],
       });
 
-      const formattedContacts: Contact[] = data
-        .filter(contact => contact.name && contact.phoneNumbers?.length)
-        .slice(0, 50) // Limit to first 50 contacts
-        .map((contact, index) => ({
-          id: contact.id || `contact-${index}`,
-          name: contact.name || 'Unknown',
-          phoneNumber: contact.phoneNumbers?.[0]?.number,
-          avatar: getRandomAvatar(),
-          isRegistered: Math.random() > 0.7, // Random registration status
-        }));
+      if (data.length > 0) {
+        const formattedContacts: Contact[] = data
+          .filter(contact => contact.name)
+          .slice(0, 20)
+          .map(contact => ({
+            id: contact.id || Math.random().toString(),
+            name: contact.name || 'Unknown',
+            phoneNumber: contact.phoneNumbers?.[0]?.number,
+            avatar: getRandomAvatar(),
+            isRegistered: Math.random() > 0.5,
+          }));
 
-      setContacts(formattedContacts);
+        setContacts(formattedContacts);
+      } else {
+        loadDemoContacts();
+      }
     } catch (error) {
       console.log('Error loading contacts:', error);
       loadDemoContacts();
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -85,37 +92,58 @@ export default function ContactsScreen() {
     const demoContacts: Contact[] = [
       {
         id: '1',
-        name: 'Анна Иванова',
-        phoneNumber: '+7 (999) 123-45-67',
+        name: 'Ada Miles',
+        phoneNumber: '+1 (555) 123-4567',
         avatar: '👩‍💼',
         isRegistered: true,
       },
       {
         id: '2',
-        name: 'Михаил Петров',
-        phoneNumber: '+7 (999) 234-56-78',
+        name: 'William Hayes',
+        phoneNumber: '+1 (555) 234-5678',
         avatar: '👨‍💻',
         isRegistered: true,
       },
       {
         id: '3',
-        name: 'Елена Сидорова',
-        phoneNumber: '+7 (999) 345-67-89',
+        name: 'Grace Brooks',
+        phoneNumber: '+1 (555) 345-6789',
         avatar: '👩‍🎨',
         isRegistered: true,
       },
       {
         id: '4',
-        name: 'Алексей Смирнов',
-        phoneNumber: '+7 (999) 456-78-90',
-        avatar: '👨‍🔧',
-        isRegistered: false,
+        name: 'Anna Giovanni',
+        phoneNumber: '+1 (555) 456-7890',
+        avatar: '👩‍🔬',
+        isRegistered: true,
       },
       {
         id: '5',
-        name: 'Мария Козлова',
-        phoneNumber: '+7 (999) 567-89-01',
-        avatar: '👩‍⚕️',
+        name: 'Emma Barnes',
+        phoneNumber: '+1 (555) 567-8901',
+        avatar: '👩‍🏫',
+        isRegistered: false,
+      },
+      {
+        id: '6',
+        name: 'Benjamin Cruz',
+        phoneNumber: '+1 (555) 678-9012',
+        avatar: '👨‍⚕️',
+        isRegistered: true,
+      },
+      {
+        id: '7',
+        name: 'Sarah Johnson',
+        phoneNumber: '+1 (555) 789-0123',
+        avatar: '👩‍💻',
+        isRegistered: false,
+      },
+      {
+        id: '8',
+        name: 'Michael Brown',
+        phoneNumber: '+1 (555) 890-1234',
+        avatar: '👨‍🎨',
         isRegistered: true,
       },
     ];
@@ -123,7 +151,7 @@ export default function ContactsScreen() {
   };
 
   const getRandomAvatar = () => {
-    const avatars = ['👨‍💼', '👩‍💼', '👨‍💻', '👩‍💻', '👨‍🎨', '👩‍🎨', '👨‍🔧', '👩‍🔧', '👨‍⚕️', '👩‍⚕️'];
+    const avatars = ['👨‍💼', '👩‍💼', '👨‍💻', '👩‍💻', '👨‍🎨', '👩‍🎨', '👨‍⚕️', '👩‍⚕️', '👨‍🏫', '👩‍🏫'];
     return avatars[Math.floor(Math.random() * avatars.length)];
   };
 
@@ -136,11 +164,11 @@ export default function ContactsScreen() {
       router.push(`/chat/${contact.id}`);
     } else {
       Alert.alert(
-        'Пригласить в приложение',
-        `${contact.name} не использует это приложение. Отправить приглашение?`,
+        'User Not Registered',
+        `${contact.name} is not using this app yet. Would you like to invite them?`,
         [
-          { text: 'Отмена', style: 'cancel' },
-          { text: 'Пригласить', onPress: () => console.log('Send invitation') },
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Invite', onPress: () => console.log('Send invite') },
         ]
       );
     }
@@ -150,7 +178,10 @@ export default function ContactsScreen() {
     if (contact.isRegistered) {
       router.push(`/video-call/${contact.id}`);
     } else {
-      Alert.alert('Недоступно', 'Пользователь не зарегистрирован в приложении');
+      Alert.alert(
+        'User Not Registered',
+        `${contact.name} is not using this app yet.`
+      );
     }
   };
 
@@ -159,16 +190,18 @@ export default function ContactsScreen() {
       style={styles.contactItem}
       onPress={() => startChat(item)}
     >
-      <View style={styles.avatarContainer}>
-        <Text style={styles.avatarText}>{item.avatar}</Text>
-        {item.isRegistered && <View style={styles.registeredIndicator} />}
-      </View>
+      <ContactAvatar 
+        name={item.name} 
+        emoji={item.avatar} 
+        size={50}
+        isOnline={item.isRegistered}
+      />
       
       <View style={styles.contactContent}>
         <Text style={styles.contactName}>{item.name}</Text>
         <Text style={styles.phoneNumber}>{item.phoneNumber}</Text>
         {!item.isRegistered && (
-          <Text style={styles.inviteText}>Пригласить в приложение</Text>
+          <Text style={styles.inviteText}>Invite to app</Text>
         )}
       </View>
 
@@ -180,6 +213,7 @@ export default function ContactsScreen() {
           >
             <IconSymbol name="message" size={20} color={colors.primary} />
           </Pressable>
+          
           <Pressable
             style={styles.actionButton}
             onPress={() => startVideoCall(item)}
@@ -194,12 +228,12 @@ export default function ContactsScreen() {
   return (
     <SafeAreaView style={commonStyles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Контакты</Text>
+        <Text style={styles.headerTitle}>Contacts</Text>
         <Pressable
-          style={styles.refreshButton}
-          onPress={loadContacts}
+          style={styles.addButton}
+          onPress={() => console.log('Add contact')}
         >
-          <IconSymbol name="arrow.clockwise" size={24} color={colors.primary} />
+          <IconSymbol name="plus" size={24} color={colors.primary} />
         </Pressable>
       </View>
 
@@ -207,7 +241,7 @@ export default function ContactsScreen() {
         <IconSymbol name="magnifyingglass" size={20} color={colors.textSecondary} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Поиск контактов..."
+          placeholder="Search contacts..."
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholderTextColor={colors.textSecondary}
@@ -220,8 +254,6 @@ export default function ContactsScreen() {
         keyExtractor={(item) => item.id}
         style={styles.contactsList}
         showsVerticalScrollIndicator={false}
-        refreshing={loading}
-        onRefresh={loadContacts}
       />
     </SafeAreaView>
   );
@@ -242,7 +274,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.text,
   },
-  refreshButton: {
+  addButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -276,32 +308,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  avatarContainer: {
-    position: 'relative',
-    marginRight: 12,
-  },
-  avatarText: {
-    fontSize: 32,
-    width: 50,
-    height: 50,
-    textAlign: 'center',
-    lineHeight: 50,
-    backgroundColor: colors.backgroundAlt,
-    borderRadius: 25,
-  },
-  registeredIndicator: {
-    position: 'absolute',
-    bottom: 2,
-    right: 2,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.primary,
-    borderWidth: 2,
-    borderColor: colors.background,
-  },
   contactContent: {
     flex: 1,
+    marginLeft: 12,
   },
   contactName: {
     fontSize: 16,

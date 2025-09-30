@@ -1,6 +1,6 @@
 
-import { Tabs } from 'expo-router';
 import React from 'react';
+import { Tabs } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { colors } from '@/styles/commonStyles';
 
@@ -19,31 +19,48 @@ export default function TabLayout() {
           paddingTop: 10,
           height: 90,
         },
-      }}>
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
+        },
+      }}
+    >
       <Tabs.Screen
         name="chats"
         options={{
-          title: 'Чаты',
+          title: 'Chats',
           tabBarIcon: ({ color, focused }) => (
-            <IconSymbol size={28} name="message" color={color} />
+            <IconSymbol 
+              name={focused ? 'message.fill' : 'message'} 
+              size={24} 
+              color={color} 
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="contacts"
         options={{
-          title: 'Контакты',
+          title: 'Contacts',
           tabBarIcon: ({ color, focused }) => (
-            <IconSymbol size={28} name="person.2" color={color} />
+            <IconSymbol 
+              name={focused ? 'person.2.fill' : 'person.2'} 
+              size={24} 
+              color={color} 
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Настройки',
+          title: 'Settings',
           tabBarIcon: ({ color, focused }) => (
-            <IconSymbol size={28} name="gear" color={color} />
+            <IconSymbol 
+              name={focused ? 'gear.fill' : 'gear'} 
+              size={24} 
+              color={color} 
+            />
           ),
         }}
       />

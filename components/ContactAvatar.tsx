@@ -10,35 +10,29 @@ interface ContactAvatarProps {
   isOnline?: boolean;
 }
 
-export function ContactAvatar({ 
-  name, 
-  size = 50, 
-  emoji, 
-  isOnline = false 
-}: ContactAvatarProps) {
+export function ContactAvatar({ name, size = 50, emoji, isOnline }: ContactAvatarProps) {
   const getInitials = (name: string) => {
     return name
       .split(' ')
-      .map(word => word[0])
+      .map(word => word.charAt(0))
       .join('')
       .toUpperCase()
       .slice(0, 2);
   };
 
-  const avatarStyle = {
+  const avatarSize = {
     width: size,
     height: size,
     borderRadius: size / 2,
   };
 
-  const textStyle = {
-    fontSize: emoji ? size * 0.6 : size * 0.3,
-    lineHeight: size,
+  const textSize = {
+    fontSize: emoji ? size * 0.6 : size * 0.35,
   };
 
   return (
-    <View style={[styles.container, avatarStyle]}>
-      <Text style={[styles.text, textStyle]}>
+    <View style={[styles.container, avatarSize]}>
+      <Text style={[styles.text, textSize]}>
         {emoji || getInitials(name)}
       </Text>
       {isOnline && (
@@ -78,3 +72,5 @@ const styles = StyleSheet.create({
     borderColor: colors.background,
   },
 });
+
+export default ContactAvatar;

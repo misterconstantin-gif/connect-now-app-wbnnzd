@@ -14,10 +14,11 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
+import { ContactAvatar } from '@/components/ContactAvatar';
 import { colors, commonStyles } from '@/styles/commonStyles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
+import * as DocumentPicker from 'expo-document-picker';
 import uuid from 'react-native-uuid';
 
 interface Message {
@@ -28,6 +29,7 @@ interface Message {
   type: 'text' | 'image' | 'file';
   fileUri?: string;
   fileName?: string;
+  fileSize?: string;
 }
 
 export default function ChatScreen() {
@@ -35,6 +37,7 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [contactName, setContactName] = useState('');
+  const [contactAvatar, setContactAvatar] = useState('');
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
@@ -44,14 +47,18 @@ export default function ChatScreen() {
 
   const loadChatData = async () => {
     try {
-      const storedChats = await AsyncStorage.getItem('chats');
-      if (storedChats) {
-        const chats = JSON.parse(storedChats);
-        const chat = chats.find((c: any) => c.id === id);
-        if (chat) {
-          setContactName(chat.name);
-        }
-      }
+      const contactNames: { [key: string]: { name: string; avatar: string } } = {
+        '1': { name: 'Ada Miles', avatar: '👩‍💼' },
+        '2': { name: 'William Hayes', avatar: '👨‍💻' },
+        '3': { name: 'Grace Brooks', avatar: '👩‍🎨' },
+        '4': { name: 'Anna Giovanni', avatar: '👩‍🔬' },
+        '5': { name: 'Emma Barnes', avatar: '👩‍🏫' },
+        '6': { name: 'Benjamin Cruz', avatar: '👨‍⚕️' },
+      };
+      
+      const contact = contactNames[id as string] || { name: 'Unknown', avatar: '👤' };
+      setContactName(contact.name);
+      setContactAvatar(contact.avatar);
     } catch (error) {
       console.log('Error loading chat data:', error);
     }
@@ -67,30 +74,61 @@ export default function ChatScreen() {
         }));
         setMessages(parsedMessages);
       } else {
-        // Demo messages
-        const demoMessages: Message[] = [
-          {
-            id: '1',
-            text: 'Привет! Как дела?',
-            timestamp: new Date(Date.now() - 3600000),
-            isSent: false,
-            type: 'text',
-          },
-          {
-            id: '2',
-            text: 'Привет! Всё отлично, спасибо! А у тебя как?',
-            timestamp: new Date(Date.now() - 3500000),
-            isSent: true,
-            type: 'text',
-          },
-          {
-            id: '3',
-            text: 'Тоже всё хорошо. Хочешь созвониться?',
-            timestamp: new Date(Date.now() - 3000000),
-            isSent: false,
-            type: 'text',
-          },
-        ];
+        // Demo messages based on the contact
+        let demoMessages: Message[] = [];
+        
+        if (id === '3') { // Grace Brooks - show file sharing example
+          demoMessages = [
+            {
+              id: '1',
+              text: 'Hi! I have the document ready for you.',
+              timestamp: new Date(Date.now() - 3600000),
+              isSent: false,
+              type: 'text',
+            },
+            {
+              id: '2',
+              text: 'The document is attached',
+              timestamp: new Date(Date.now() - 3500000),
+              isSent: false,
+              type: 'file',
+              fileName: 'document.pdf',
+              fileSize: '2.4 MB',
+            },
+            {
+              id: '3',
+              text: 'Thank you!',
+              timestamp: new Date(Date.now() - 3000000),
+              isSent: true,
+              type: 'text',
+            },
+          ];
+        } else {
+          demoMessages = [
+            {
+              id: '1',
+              text: 'Hello! How are you?',
+              timestamp: new Date(Date.now() - 3600000),
+              isSent: false,
+              type: 'text',
+            },
+            {
+              id: '2',
+              text: 'Hi! I\'m doing great, thanks! How about you?',
+              timestamp: new Date(Date.now() - 3500000),
+              isSent: true,
+              type: 'text',
+            },
+            {
+              id: '3',
+              text: 'All good here too. Want to have a video call?',
+              timestamp: new Date(Date.now() - 3000000),
+              isSent: false,
+              type: 'text',
+            },
+          ];
+        }
+        
         setMessages(demoMessages);
       }
     } catch (error) {
@@ -121,18 +159,29 @@ export default function ChatScreen() {
       saveMessages(updatedMessages);
       setInputText('');
 
-      // Scroll to bottom
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
     }
   };
 
+  const pickFile = async () => {
+    Alert.alert(
+      'Select File',
+      'Choose the type of file to send',
+      [
+        { text: 'Photo', onPress: pickImage },
+        { text: 'Document', onPress: pickDocument },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
+
   const pickImage = async () => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Ошибка', 'Необходимо разрешение для доступа к галерее');
+        Alert.alert('Error', 'Permission to access gallery is required');
         return;
       }
 
@@ -147,12 +196,13 @@ export default function ChatScreen() {
         const asset = result.assets[0];
         const newMessage: Message = {
           id: uuid.v4() as string,
-          text: 'Изображение',
+          text: 'Photo',
           timestamp: new Date(),
           isSent: true,
           type: 'image',
           fileUri: asset.uri,
           fileName: asset.fileName || 'image.jpg',
+          fileSize: '1.2 MB',
         };
 
         const updatedMessages = [...messages, newMessage];
@@ -165,7 +215,41 @@ export default function ChatScreen() {
       }
     } catch (error) {
       console.log('Error picking image:', error);
-      Alert.alert('Ошибка', 'Не удалось выбрать изображение');
+      Alert.alert('Error', 'Failed to pick image');
+    }
+  };
+
+  const pickDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        const newMessage: Message = {
+          id: uuid.v4() as string,
+          text: 'Document',
+          timestamp: new Date(),
+          isSent: true,
+          type: 'file',
+          fileUri: asset.uri,
+          fileName: asset.name,
+          fileSize: `${(asset.size! / 1024 / 1024).toFixed(1)} MB`,
+        };
+
+        const updatedMessages = [...messages, newMessage];
+        setMessages(updatedMessages);
+        saveMessages(updatedMessages);
+
+        setTimeout(() => {
+          flatListRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
+    } catch (error) {
+      console.log('Error picking document:', error);
+      Alert.alert('Error', 'Failed to pick document');
     }
   };
 
@@ -174,9 +258,10 @@ export default function ChatScreen() {
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('ru-RU', {
+    return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
+      hour12: false,
     });
   };
 
@@ -187,33 +272,91 @@ export default function ChatScreen() {
         item.isSent ? styles.sentMessageContainer : styles.receivedMessageContainer,
       ]}
     >
+      {!item.isSent && (
+        <ContactAvatar 
+          name={contactName} 
+          emoji={contactAvatar} 
+          size={32}
+        />
+      )}
+      
       <View
         style={[
-          commonStyles.chatBubble,
-          item.isSent ? commonStyles.sentMessage : commonStyles.receivedMessage,
+          styles.messageBubble,
+          item.isSent ? styles.sentBubble : styles.receivedBubble,
         ]}
       >
-        {item.type === 'image' && item.fileUri ? (
-          <View>
-            <Text
-              style={[
-                commonStyles.messageText,
-                item.isSent ? commonStyles.sentMessageText : commonStyles.receivedMessageText,
-              ]}
-            >
-              📷 {item.fileName}
-            </Text>
+        {item.type === 'file' ? (
+          <View style={styles.fileMessage}>
+            <View style={styles.fileIcon}>
+              <IconSymbol 
+                name="doc.text" 
+                size={20} 
+                color={item.isSent ? '#FFFFFF' : colors.primary} 
+              />
+            </View>
+            <View style={styles.fileInfo}>
+              <Text
+                style={[
+                  styles.fileName,
+                  item.isSent ? styles.sentText : styles.receivedText,
+                ]}
+              >
+                {item.fileName}
+              </Text>
+              {item.fileSize && (
+                <Text
+                  style={[
+                    styles.fileSize,
+                    item.isSent ? styles.sentTextSecondary : styles.receivedTextSecondary,
+                  ]}
+                >
+                  {item.fileSize}
+                </Text>
+              )}
+            </View>
+          </View>
+        ) : item.type === 'image' ? (
+          <View style={styles.fileMessage}>
+            <View style={styles.fileIcon}>
+              <IconSymbol 
+                name="photo" 
+                size={20} 
+                color={item.isSent ? '#FFFFFF' : colors.primary} 
+              />
+            </View>
+            <View style={styles.fileInfo}>
+              <Text
+                style={[
+                  styles.fileName,
+                  item.isSent ? styles.sentText : styles.receivedText,
+                ]}
+              >
+                {item.fileName}
+              </Text>
+              {item.fileSize && (
+                <Text
+                  style={[
+                    styles.fileSize,
+                    item.isSent ? styles.sentTextSecondary : styles.receivedTextSecondary,
+                  ]}
+                >
+                  {item.fileSize}
+                </Text>
+              )}
+            </View>
           </View>
         ) : (
           <Text
             style={[
-              commonStyles.messageText,
-              item.isSent ? commonStyles.sentMessageText : commonStyles.receivedMessageText,
+              styles.messageText,
+              item.isSent ? styles.sentText : styles.receivedText,
             ]}
           >
             {item.text}
           </Text>
         )}
+        
         <Text
           style={[
             styles.timestamp,
@@ -223,6 +366,14 @@ export default function ChatScreen() {
           {formatTime(item.timestamp)}
         </Text>
       </View>
+      
+      {item.isSent && (
+        <ContactAvatar 
+          name="You" 
+          emoji="👤" 
+          size={32}
+        />
+      )}
     </View>
   );
 
@@ -241,9 +392,16 @@ export default function ChatScreen() {
             <IconSymbol name="chevron.left" size={24} color={colors.primary} />
           </Pressable>
           
+          <ContactAvatar 
+            name={contactName} 
+            emoji={contactAvatar} 
+            size={40}
+            isOnline={true}
+          />
+          
           <View style={styles.headerInfo}>
             <Text style={styles.headerTitle}>{contactName}</Text>
-            <Text style={styles.headerSubtitle}>в сети</Text>
+            <Text style={styles.headerSubtitle}>online</Text>
           </View>
 
           <Pressable
@@ -270,20 +428,29 @@ export default function ChatScreen() {
         <View style={styles.inputContainer}>
           <Pressable
             style={styles.attachButton}
-            onPress={pickImage}
+            onPress={pickFile}
           >
             <IconSymbol name="paperclip" size={24} color={colors.primary} />
           </Pressable>
           
-          <TextInput
-            style={styles.textInput}
-            placeholder="Сообщение..."
-            value={inputText}
-            onChangeText={setInputText}
-            multiline
-            maxLength={1000}
-            placeholderTextColor={colors.textSecondary}
-          />
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Message"
+              value={inputText}
+              onChangeText={setInputText}
+              multiline
+              maxLength={1000}
+              placeholderTextColor={colors.textSecondary}
+            />
+            
+            <Pressable
+              style={styles.emojiButton}
+              onPress={() => console.log('Emoji picker')}
+            >
+              <Text style={styles.emojiText}>😊</Text>
+            </Pressable>
+          </View>
           
           <Pressable
             style={[styles.sendButton, inputText.trim() ? styles.sendButtonActive : null]}
@@ -326,6 +493,7 @@ const styles = StyleSheet.create({
   },
   headerInfo: {
     flex: 1,
+    marginLeft: 12,
   },
   headerTitle: {
     fontSize: 18,
@@ -351,14 +519,70 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   messageContainer: {
+    flexDirection: 'row',
     paddingHorizontal: 16,
-    marginVertical: 2,
-  },
-  sentMessageContainer: {
+    marginVertical: 4,
     alignItems: 'flex-end',
   },
+  sentMessageContainer: {
+    justifyContent: 'flex-end',
+  },
   receivedMessageContainer: {
-    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+  },
+  messageBubble: {
+    maxWidth: '70%',
+    padding: 12,
+    borderRadius: 18,
+    marginHorizontal: 8,
+  },
+  sentBubble: {
+    backgroundColor: colors.primary,
+    borderBottomRightRadius: 4,
+  },
+  receivedBubble: {
+    backgroundColor: colors.backgroundAlt,
+    borderBottomLeftRadius: 4,
+  },
+  messageText: {
+    fontSize: 16,
+    lineHeight: 20,
+  },
+  sentText: {
+    color: '#FFFFFF',
+  },
+  receivedText: {
+    color: colors.text,
+  },
+  fileMessage: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  fileIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  fileInfo: {
+    flex: 1,
+  },
+  fileName: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  fileSize: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  sentTextSecondary: {
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  receivedTextSecondary: {
+    color: colors.textSecondary,
   },
   timestamp: {
     fontSize: 11,
@@ -388,17 +612,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 8,
   },
-  textInput: {
+  inputWrapper: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 20,
+    backgroundColor: colors.backgroundAlt,
     paddingHorizontal: 16,
     paddingVertical: 10,
+  },
+  textInput: {
+    flex: 1,
     fontSize: 16,
     color: colors.text,
-    backgroundColor: colors.backgroundAlt,
     maxHeight: 100,
+  },
+  emojiButton: {
+    marginLeft: 8,
+  },
+  emojiText: {
+    fontSize: 20,
   },
   sendButton: {
     width: 40,
