@@ -1,14 +1,21 @@
+
 import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
 
 export const colors = {
-  primary: '#162456',    // Material Blue
-  secondary: '#193cb8',  // Darker Blue
-  accent: '#64B5F6',     // Light Blue
-  background: '#101824',  // Keeping dark background
-  backgroundAlt: '#162133',  // Keeping dark background
-  text: '#e3e3e3',       // Keeping light text
-  grey: '#90CAF9',       // Light Blue Grey
-  card: '#193cb8',       // Keeping dark card background
+  primary: '#007AFF',      // iOS Blue
+  secondary: '#5856D6',    // iOS Purple
+  accent: '#FF3B30',       // iOS Red
+  background: '#FFFFFF',   // White background for light theme
+  backgroundAlt: '#F2F2F7', // Light gray background
+  text: '#000000',         // Black text
+  textSecondary: '#8E8E93', // Gray text
+  grey: '#C7C7CC',         // Light gray
+  card: '#FFFFFF',         // White card background
+  border: '#E5E5EA',       // Light border
+  success: '#34C759',      // iOS Green
+  warning: '#FF9500',      // iOS Orange
+  online: '#34C759',       // Online status green
+  offline: '#8E8E93',      // Offline status gray
 };
 
 export const buttonStyles = StyleSheet.create({
@@ -21,6 +28,30 @@ export const buttonStyles = StyleSheet.create({
     backgroundColor: colors.backgroundAlt,
     alignSelf: 'center',
     width: '100%',
+  },
+  callButton: {
+    backgroundColor: colors.success,
+    borderRadius: 30,
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  endCallButton: {
+    backgroundColor: colors.accent,
+    borderRadius: 30,
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  muteButton: {
+    backgroundColor: colors.backgroundAlt,
+    borderRadius: 30,
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
@@ -35,8 +66,6 @@ export const commonStyles = StyleSheet.create({
     backgroundColor: colors.background,
     width: '100%',
     height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   content: {
     flex: 1,
@@ -60,6 +89,12 @@ export const commonStyles = StyleSheet.create({
     lineHeight: 24,
     textAlign: 'center',
   },
+  textSecondary: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: colors.textSecondary,
+    lineHeight: 20,
+  },
   section: {
     width: '100%',
     alignItems: 'center',
@@ -71,19 +106,59 @@ export const commonStyles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   card: {
-    backgroundColor: colors.backgroundAlt,
-    borderColor: colors.grey,
+    backgroundColor: colors.card,
+    borderColor: colors.border,
     borderWidth: 1,
-    borderRadius: 10,
-    padding: 10,
+    borderRadius: 12,
+    padding: 16,
     marginVertical: 8,
     width: '100%',
-    boxShadow: '0px 2px 3px rgba(0, 0, 0, 0.1)',
+    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
     elevation: 2,
   },
+  chatBubble: {
+    maxWidth: '80%',
+    padding: 12,
+    borderRadius: 18,
+    marginVertical: 4,
+  },
+  sentMessage: {
+    backgroundColor: colors.primary,
+    alignSelf: 'flex-end',
+    borderBottomRightRadius: 4,
+  },
+  receivedMessage: {
+    backgroundColor: colors.backgroundAlt,
+    alignSelf: 'flex-start',
+    borderBottomLeftRadius: 4,
+  },
+  messageText: {
+    fontSize: 16,
+    lineHeight: 20,
+  },
+  sentMessageText: {
+    color: '#FFFFFF',
+  },
+  receivedMessageText: {
+    color: colors.text,
+  },
   icon: {
-    width: 60,
-    height: 60,
-    tintColor: "white",
+    width: 24,
+    height: 24,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: colors.backgroundAlt,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tabBar: {
+    backgroundColor: colors.background,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingBottom: 20,
+    paddingTop: 10,
   },
 });
