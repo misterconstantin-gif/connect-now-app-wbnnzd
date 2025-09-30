@@ -12,7 +12,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { IconSymbol } from '@/components/IconSymbol';
 import { colors, commonStyles, buttonStyles } from '@/styles/commonStyles';
-import { Camera } from 'expo-camera';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 
 const { width, height } = Dimensions.get('window');
@@ -25,10 +25,9 @@ export default function VideoCallScreen() {
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [cameraType, setCameraType] = useState<'front' | 'back'>('front');
   const [callDuration, setCallDuration] = useState(0);
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [permission, requestPermission] = useCameraPermissions();
 
   useEffect(() => {
-    requestPermissions();
     loadContactName();
     
     // Simulate call connection after 2 seconds
@@ -50,16 +49,6 @@ export default function VideoCallScreen() {
       if (durationTimer) clearInterval(durationTimer);
     };
   }, [isConnected]);
-
-  const requestPermissions = async () => {
-    try {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
-    } catch (error) {
-      console.log('Error requesting camera permission:', error);
-      setHasPermission(false);
-    }
-  };
 
   const loadContactName = () => {
     // In a real app, this would load from AsyncStorage
@@ -105,7 +94,7 @@ export default function VideoCallScreen() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  if (hasPermission === null) {
+  if (!permission) {
     return (
       <SafeAreaView style={commonStyles.container}>
         <View style={styles.centerContent}>
@@ -115,7 +104,7 @@ export default function VideoCallScreen() {
     );
   }
 
-  if (hasPermission === false) {
+  if (!permission.granted) {
     return (
       <SafeAreaView style={commonStyles.container}>
         <View style={styles.centerContent}>
@@ -123,8 +112,11 @@ export default function VideoCallScreen() {
           <Text style={styles.subtitleText}>
             Для видеозвонков необходимо разрешение на использование камеры
           </Text>
-          <Pressable style={styles.button} onPress={() => router.back()}>
-            <Text style={styles.buttonText}>Назад</Text>
+          <Pressable style={styles.button} onPress={requestPermission}>
+            <Text style={styles.buttonText}>Разрешить доступ</Text>
+          </Pressable>
+          <Pressable style={[styles.button, { backgroundColor: colors.backgroundAlt, marginTop: 16 }]} onPress={() => router.back()}>
+            <Text style={[styles.buttonText, { color: colors.text }]}>Назад</Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -136,10 +128,9 @@ export default function VideoCallScreen() {
       {/* Video Area */}
       <View style={styles.videoContainer}>
         {isVideoEnabled ? (
-          <Camera
+          <CameraView
             style={styles.camera}
             facing={cameraType}
-            ratio="16:9"
           />
         ) : (
           <View style={styles.videoDisabled}>
