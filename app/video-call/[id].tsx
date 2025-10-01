@@ -33,7 +33,11 @@ export default function VideoCallScreen() {
     // Simulate call connection after 2 seconds
     const connectTimer = setTimeout(() => {
       setIsConnected(true);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      try {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch (error) {
+        console.log('Haptics error:', error);
+      }
     }, 2000);
 
     return () => {
@@ -55,35 +59,59 @@ export default function VideoCallScreen() {
   }, [isConnected]);
 
   const loadContactName = () => {
-    // Map contact names based on ID
-    const contactNames: { [key: string]: string } = {
-      '1': 'Ada Miles',
-      '2': 'William Hayes', 
-      '3': 'Grace Brooks',
-      '4': 'Anna Giovanni',
-      '5': 'Emma Barnes',
-      '6': 'Benjamin Cruz',
-    };
-    setContactName(contactNames[id as string] || 'Ella Davis');
+    try {
+      // Map contact names based on ID
+      const contactNames: { [key: string]: string } = {
+        '1': 'Ada Miles',
+        '2': 'William Hayes', 
+        '3': 'Grace Brooks',
+        '4': 'Anna Giovanni',
+        '5': 'Emma Barnes',
+        '6': 'Benjamin Cruz',
+      };
+      setContactName(contactNames[id as string] || 'Unknown Contact');
+    } catch (error) {
+      console.log('Error loading contact name:', error);
+      setContactName('Unknown Contact');
+    }
   };
 
   const toggleMute = () => {
-    setIsMuted(!isMuted);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      setIsMuted(!isMuted);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (error) {
+      console.log('Error toggling mute:', error);
+      setIsMuted(!isMuted);
+    }
   };
 
   const toggleVideo = () => {
-    setIsVideoEnabled(!isVideoEnabled);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      setIsVideoEnabled(!isVideoEnabled);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (error) {
+      console.log('Error toggling video:', error);
+      setIsVideoEnabled(!isVideoEnabled);
+    }
   };
 
   const switchCamera = () => {
-    setCameraType(cameraType === 'back' ? 'front' : 'back');
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      setCameraType(cameraType === 'back' ? 'front' : 'back');
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (error) {
+      console.log('Error switching camera:', error);
+      setCameraType(cameraType === 'back' ? 'front' : 'back');
+    }
   };
 
   const endCall = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    try {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    } catch (error) {
+      console.log('Haptics error:', error);
+    }
     router.back();
   };
 

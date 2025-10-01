@@ -1,3 +1,4 @@
+
 // This file is a fallback for using MaterialIcons on Android and web.
 
 import React from "react";
@@ -28,6 +29,8 @@ const MAPPING = {
   "chevron.down": "keyboard-arrow-down",
   "arrow.clockwise": "refresh",
   "arrow.counterclockwise": "refresh",
+  "arrow.down.left": "call-received",
+  "arrow.up.right": "call-made",
 
   // Communication & Social
   "paperplane.fill": "send",
@@ -36,6 +39,7 @@ const MAPPING = {
   "envelope": "mail-outline",
   "phone.fill": "phone",
   "phone": "phone-outlined",
+  "phone.down": "call-end",
   "message.fill": "chat",
   "message": "chat-bubble-outline",
   "bell.fill": "notifications",
@@ -55,6 +59,7 @@ const MAPPING = {
   "multiply": "clear",
   "trash.fill": "delete",
   "trash": "delete-outline",
+  "paperclip": "attach-file",
 
   // Editing & Creation
   "pencil": "edit",
@@ -73,16 +78,21 @@ const MAPPING = {
   "camera.fill": "camera-alt",
   "camera": "camera-alt",
   "video.fill": "videocam",
-  "video": "videocam-off",
+  "video": "videocam",
+  "video.slash": "videocam-off",
   "music.note": "music-note",
   "speaker.wave.2.fill": "volume-up",
+  "speaker.wave.2": "volume-up",
   "speaker.slash.fill": "volume-off",
   "play.fill": "play-arrow",
   "pause.fill": "pause",
   "stop.fill": "stop",
+  "mic": "mic",
+  "mic.slash": "mic-off",
 
   // System & Settings
   "gear": "settings",
+  "gear.fill": "settings",
   "gearshape.fill": "settings",
   "slider.horizontal.3": "tune",
   "info.circle.fill": "info",
@@ -110,6 +120,11 @@ const MAPPING = {
   "battery.25": "battery-2-bar",
   "lock.fill": "lock",
   "lock.open.fill": "lock-open",
+  "lock.shield": "security",
+  "network": "network-check",
+  "server.rack": "dns",
+  "internaldrive": "storage",
+  "iphone.radiowaves.left.and.right": "vibration",
 
   // Shopping & Commerce
   "cart.fill": "shopping-cart",
@@ -140,6 +155,7 @@ const MAPPING = {
   "person.2": "group",
   "person.crop.circle.fill": "account-circle",
   "person.crop.circle": "account-circle",
+  "person.circle": "account-circle",
 
   // Sharing & Export
   "square.and.arrow.up": "share",
@@ -158,6 +174,9 @@ const MAPPING = {
   "lightbulb.fill": "lightbulb",
   "moon.fill": "dark-mode",
   "sun.max.fill": "light-mode",
+
+  // Camera controls
+  "arrow.triangle.2.circlepath.camera": "flip-camera-ios",
 } as Partial<
   Record<
     import("expo-symbols").SymbolViewProps["name"],
